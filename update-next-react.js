@@ -1,17 +1,17 @@
 // Updates Next.js and React packages across multiple projects
 //
-// Usage:
-//   node update-next-react.js                          # Dry-run in current directory
-//   node update-next-react.js --execute                # Actually update packages in current directory
-//   node update-next-react.js /path/to/projects        # Use custom directory
-//   node update-next-react.js ~/GitHub_repos --execute # Custom directory + execute
-//
 // Features:
 //   - Only updates within current major versions (Next 15→15.x, React 19→19.x)
 //   - Fixes pinned versions (adds ^)
 //   - Git integration (pull before, commit/push after)
 //   - Only shows projects with Next.js or React
 //   - Recursively searches current folder and all subdirectories for package.json files (skips node_modules, .git)
+//
+// Usage:
+//   node update-next-react.js                          # Dry-run in current directory
+//   node update-next-react.js --execute                # Actually update packages in current directory
+//   node update-next-react.js /path/to/projects        # Use custom directory
+//   node update-next-react.js ~/GitHub_repos --execute # Custom directory + execute
 //
 
 const fs = require("fs");
