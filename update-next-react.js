@@ -1,15 +1,32 @@
+// Updates Next.js and React packages across multiple projects
+//
+// Usage:
+//   node update-next-react.js                          # Dry-run in current directory
+//   node update-next-react.js --execute                # Actually update packages in current directory
+//   node update-next-react.js /path/to/projects        # Use custom directory
+//   node update-next-react.js ~/GitHub_repos --execute # Custom directory + execute
+//
+// Features:
+//   - Only updates within current major versions (Next 15→15.x, React 19→19.x)
+//   - Fixes pinned versions (adds ^)
+//   - Git integration (pull before, commit/push after)
+//   - Only shows projects with Next.js or React
+//   - Recursively searches current folder and all subdirectories for package.json files (skips node_modules, .git)
+//
+
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
 const readline = require("readline");
 
+// Get repos directory from command line argument or use current directory
 const args = process.argv.filter((arg) => !arg.includes("--execute"));
-const customDir = args[2];
+const customDir = args[2]; // First non-flag argument
 const REPOS_DIR = customDir
   ? path.isAbsolute(customDir)
     ? customDir
     : path.join(process.cwd(), customDir)
-  : process.cwd();
+  : process.cwd(); // Use current working directory
 
 const DRY_RUN = !process.argv.includes("--execute");
 
@@ -75,6 +92,42 @@ function hasRelevantPackages(projectPath) {
   }
 
   return false;
+}
+
+// Recursively find all directories with package.json
+function findAllPackageJsons(dir, results = []) {
+  try {
+    // Check if current directory has package.json
+    if (fs.existsSync(path.join(dir, "package.json"))) {
+      results.push({
+        name: path.basename(dir),
+        path: dir,
+      });
+    }
+
+    // Recursively check subdirectories
+    const items = fs.readdirSync(dir);
+    for (const item of items) {
+      // Skip node_modules, .git, and hidden folders
+      if (item === "node_modules" || item === ".git" || item.startsWith(".")) {
+        continue;
+      }
+
+      const fullPath = path.join(dir, item);
+      try {
+        if (fs.statSync(fullPath).isDirectory()) {
+          findAllPackageJsons(fullPath, results);
+        }
+      } catch {
+        // Skip if can't access
+        continue;
+      }
+    }
+  } catch (error) {
+    // Skip if can't read directory
+  }
+
+  return results;
 }
 
 // Get latest version within a major version range from npm
@@ -426,6 +479,7 @@ async function main() {
   console.log("═".repeat(60));
   console.log("🔍 Next.js & React v19 Package Updater");
   console.log("═".repeat(60));
+  console.log("Scanning directory:", REPOS_DIR);
   console.log(
     "Mode:",
     DRY_RUN ? "🔒 DRY RUN (safe)" : "⚡ EXECUTE (will update)"
@@ -440,24 +494,36 @@ async function main() {
   }
 
   if (DRY_RUN) {
+    console.log("\n💡 To actually update: node update-next-react.js --execute");
     console.log(
-      "\n💡 To actually update, run: node update-next-react.js --execute"
+      "💡 Different directory: node update-next-react.js /path/to/projects"
     );
   }
   console.log("═".repeat(60));
 
-  const allProjects = fs.readdirSync(REPOS_DIR).filter((item) => {
-    const fullPath = path.join(REPOS_DIR, item);
-    return (
-      fs.statSync(fullPath).isDirectory() &&
-      fs.existsSync(path.join(fullPath, "package.json"))
+  // Check if directory exists
+  if (!fs.existsSync(REPOS_DIR)) {
+    console.error(`\n❌ Error: Directory not found: ${REPOS_DIR}`);
+    console.error("\n💡 Usage:");
+    console.error(
+      "   node update-next-react.js                    # Current directory"
     );
-  });
+    console.error(
+      "   node update-next-react.js /path/to/projects  # Custom directory"
+    );
+    console.error(
+      "   node update-next-react.js ./my-projects      # Relative path"
+    );
+    process.exit(1);
+  }
+
+  // Recursively find all projects with package.json
+  console.log(`\n🔍 Scanning ${REPOS_DIR} recursively...`);
+  const allProjects = findAllPackageJsons(REPOS_DIR);
 
   // Filter to only projects with Next.js or React
   const projects = allProjects.filter((project) => {
-    const fullPath = path.join(REPOS_DIR, project);
-    return hasRelevantPackages(fullPath);
+    return hasRelevantPackages(project.path);
   });
 
   console.log(
@@ -465,14 +531,11 @@ async function main() {
   );
 
   for (const project of projects) {
-    await checkAndUpdate(path.join(REPOS_DIR, project));
+    await checkAndUpdate(project.path);
   }
 
   console.log("\n" + "═".repeat(60));
-
-  if (DRY_RUN) console.log("✨ Scan complete!");
-  else console.log("✨ Scan and update complete!");
-
+  console.log("✨ Scan complete!");
   console.log("═".repeat(60));
 }
 
