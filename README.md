@@ -9,6 +9,8 @@ Safely update Next.js and React packages across multiple projects while staying 
 - Fixes pinned versions (adds `^` to package.json)
 - Git integration (pull before, commit/push after)
 - Only processes relevant projects (ignores Vue, Angular, etc.)
+- Recursively searches current folder and all subdirectories for package.json files (skips node_modules, .git)
+
 
 ## Usage
 ```bash
