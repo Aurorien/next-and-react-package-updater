@@ -1,6 +1,6 @@
 # Next.js & React Package Updater
 
-Safely update Next.js and React packages across multiple projects while staying within major versions.
+Safely update Next.js and React packages across multiple projects while staying within major versions. It can be used on a local device and will run by default in current folder if not path to another folder is specified.
 
 ## Features
 
