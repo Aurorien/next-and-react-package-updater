@@ -12,6 +12,10 @@ Safely update Next.js and React packages across multiple projects while staying 
 - Recursively searches current folder and all subdirectories for package.json files (skips node_modules, .git)
 
 
+## Why
+I built it with AI agents after the React2Shell vulnerability (CVE-2025-55182) in December 2025, to make updating several Next.js projects more efficient as follow-up fixes kept coming.
+
+
 ## Usage
 ```bash
 # Dry-run check in current directory without updating
